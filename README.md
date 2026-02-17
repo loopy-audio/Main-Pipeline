@@ -1,14 +1,16 @@
-# Spatial Audio Pipeline API (Placeholder Integrations)
+# Spatial Audio Pipeline API
 
-This service is the orchestration layer for your spatial audio pipeline.
+Short operator guide: `/Users/columbus/Development/IDPRO/main_pipeline/docs/PIPELINE_QUICKSTART.md`
 
-Current scope:
-- Accept audio uploads
-- Persist local job files/artifacts
-- Cache stage responses locally by input hash
-- Run **placeholder** Demucs/WhisperX stages (no external calls yet)
+This service orchestrates your hosted audio services:
+- Demucs API (`/separate`) for stems
+- WhisperX API (`/transcribe`) for transcript + timestamps
+- Gemini API for per-word 3D position prediction
+
+It also stores local artifacts and caches API responses on disk for faster re-runs.
 
 ## Endpoints
+- `GET /health`
 - `GET /healthz`
 - `POST /jobs` (multipart: `file`, optional `language`)
 - `GET /jobs/{job_id}`
@@ -29,17 +31,34 @@ curl -X POST "http://localhost:8080/jobs" \
   -F "language=en"
 ```
 
-## Local data layout
-By default data is stored in `./data` (set `DATA_DIR` to override):
+## Data layout
+Default root is `./data` (override with `DATA_DIR`):
 - `data/jobs/<job_id>/job.json`
+- `data/jobs/<job_id>/stems.zip` (when live Demucs runs)
+- `data/jobs/<job_id>/vocals.*` (extracted from zip)
 - `data/jobs/<job_id>/demucs.json`
 - `data/jobs/<job_id>/whisperx.json`
+- `data/jobs/<job_id>/gemini_positions.json`
 - `data/cache/responses/*.json`
+- `data/cache/stems/<cache_key>/stems.zip`
+- `data/cache/stems/<cache_key>/vocals.*`
 
-## Env vars
+## Environment variables
 - `DATA_DIR` (default: `./data`)
 - `MAX_UPLOAD_MB` (default: `250`)
+- `USE_HOSTED_APIS` (`true` or `false`, default: `true`)
+- `API_KEY` (required when `USE_HOSTED_APIS=true`)
+- `DEMUCS_URL` (default: hosted Cloud Run `/separate`)
+- `WHISPERX_URL` (default: hosted Cloud Run `/transcribe`)
+- `REQUEST_TIMEOUT_S` (default: `1800`)
+- `ENABLE_GEMINI` (`true` or `false`, default: `true`)
+- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`, optional; fallback positions are used if absent)
+- `GEMINI_MODEL` (default: `gemini-1.5-flash`)
+- `GEMINI_CHUNK_SIZE` (default: `180`)
 
-## Next integration step
-Replace `DemucsPlaceholderClient` and `WhisperXPlaceholderClient` in `app/services/placeholders.py`
-with HTTP clients to your hosted APIs while preserving cache keys/contracts.
+## Behavior notes
+- Demucs output is cached under `data/cache/stems` and reused by input hash.
+- WhisperX JSON is cached by input hash + language.
+- Gemini word-position JSON is cached by input hash + transcript words hash + model.
+- If hosted APIs are disabled, placeholder clients are used.
+- Vocals extraction is resilient to `vocals` or `voice` stem naming in ZIP content.

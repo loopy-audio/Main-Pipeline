@@ -10,18 +10,29 @@ from app.models import JobResponse
 from app.services.pipeline import PipelineService
 from app.services.storage import LocalStorage
 
-app = FastAPI(title="Spatial Audio Pipeline", version="0.1.0")
+app = FastAPI(title="Spatial Audio Pipeline", version="0.2.0")
 storage = LocalStorage(settings.data_dir)
-pipeline = PipelineService(storage)
+pipeline: PipelineService | None = None
+pipeline_init_error: str | None = None
+try:
+    pipeline = PipelineService(storage)
+except Exception as exc:  # pragma: no cover - startup guard
+    pipeline_init_error = str(exc)
 
 
 @app.get("/health")
+@app.get("/healthz")
 def healthz() -> dict:
+    if pipeline_init_error:
+        return {"ok": False, "error": pipeline_init_error}
     return {"ok": True}
 
 
 @app.post("/jobs", response_model=JobResponse)
 async def create_job(file: UploadFile = File(...), language: str | None = Form(default=None)) -> JobResponse:
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail=f"Pipeline unavailable: {pipeline_init_error}")
+
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
