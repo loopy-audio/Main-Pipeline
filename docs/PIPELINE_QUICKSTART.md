@@ -11,6 +11,8 @@ WHISPERX_URL=https://whisperx-.../transcribe
 ENABLE_GEMINI=true
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-flash-latest
+GEMINI_CHUNK_SIZE=60
+GEMINI_CONTEXT_WORDS=12
 ```
 
 ## 2) Start API
@@ -50,3 +52,13 @@ Cache locations:
 - `data/cache/stems/<key>/stems.zip`
 - `data/cache/stems/<key>/vocals.*`
 - `data/cache/responses/*.json`
+
+## ambisonicPy mapping
+`gemini_positions.json` includes `ambisonic_effects` ready for `Speaker.add_effect`:
+
+```python
+for item in gemini_json["ambisonic_effects"]:
+    speaker.add_effect(tuple(item["time_range"]), item["effect"])
+```
+
+Angles are predicted in `position_pi` (units of π) and mirrored in radians under `position_rad`.

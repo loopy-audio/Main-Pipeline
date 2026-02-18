@@ -54,11 +54,14 @@ Default root is `./data` (override with `DATA_DIR`):
 - `ENABLE_GEMINI` (`true` or `false`, default: `true`)
 - `GEMINI_API_KEY` (or `GOOGLE_API_KEY`, optional; fallback positions are used if absent)
 - `GEMINI_MODEL` (default: `gemini-1.5-flash`)
-- `GEMINI_CHUNK_SIZE` (default: `180`)
+- `GEMINI_CHUNK_SIZE` (default: `60`)
+- `GEMINI_CONTEXT_WORDS` (default: `12`)
 
 ## Behavior notes
 - Demucs output is cached under `data/cache/stems` and reused by input hash.
 - WhisperX JSON is cached by input hash + language.
 - Gemini word-position JSON is cached by input hash + transcript words hash + model.
+- `gemini_positions.json` includes `ambisonic_effects` entries that map directly to `Speaker.add_effect`.
+- Gemini predicts angles in PI units (`position_pi`) and also provides radians (`position_rad`) for rendering.
 - If hosted APIs are disabled, placeholder clients are used.
 - Vocals extraction is resilient to `vocals` or `voice` stem naming in ZIP content.

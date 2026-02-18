@@ -30,11 +30,12 @@ class PipelineService:
         else:
             self.demucs = DemucsPlaceholderClient()
             self.whisperx = WhisperXPlaceholderClient()
-            self.gemini = GeminiLyricsClient(
+        self.gemini = GeminiLyricsClient(
             api_key=settings.gemini_api_key,
             model=settings.gemini_model,
             timeout_s=settings.request_timeout_s,
             chunk_size=settings.gemini_chunk_size,
+            context_words=settings.gemini_context_words,
         )
 
     def _save_job(
@@ -152,10 +153,12 @@ class PipelineService:
         words = whisperx_payload.get("words", [])
         words_sha = GeminiLyricsClient.words_digest(words)
         gemini_params = {
-            "version": "v1-gemini-lyrics",
+            "version": "v3-gemini-lyrics-pi-context",
             "model": settings.gemini_model,
             "language": language,
             "words_sha256": words_sha,
+            "chunk_size": settings.gemini_chunk_size,
+            "context_words": settings.gemini_context_words,
         }
         gemini_key = self.storage.cache_key("gemini_positions", input_sha256, gemini_params)
         gemini_cached = self.storage.cache_get(gemini_key)

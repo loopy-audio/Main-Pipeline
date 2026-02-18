@@ -18,6 +18,7 @@ class Settings:
     gemini_api_key: str | None
     gemini_model: str
     gemini_chunk_size: int
+    gemini_context_words: int
 
     @staticmethod
     def from_env() -> "Settings":
@@ -37,7 +38,8 @@ class Settings:
         enable_gemini = os.getenv("ENABLE_GEMINI", "true").lower() == "true"
         gemini_api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-        gemini_chunk_size = int(os.getenv("GEMINI_CHUNK_SIZE", "180"))
+        gemini_chunk_size = int(os.getenv("GEMINI_CHUNK_SIZE", "60"))
+        gemini_context_words = int(os.getenv("GEMINI_CONTEXT_WORDS", "12"))
         return Settings(
             data_dir=data_dir,
             max_upload_mb=max_upload_mb,
@@ -50,6 +52,7 @@ class Settings:
             gemini_api_key=gemini_api_key,
             gemini_model=gemini_model,
             gemini_chunk_size=gemini_chunk_size,
+            gemini_context_words=gemini_context_words,
         )
 
 
